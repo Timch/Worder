@@ -9,12 +9,24 @@
     <style>
         input {
             font-family: monospace;
+            font-size: xx-large;
+            letter-spacing: 0.5rem;
             text-transform: uppercase;
         }
 
         .label-clue {
             font-size: 0.8rem;
             font-style: italic;
+        }
+
+        section#output {
+            grid-template-columns: repeat(auto-fit, minmax(100px, 100px));
+        }
+    
+        .word {
+            font-family: monospace;
+            font-size: xx-large;
+            letter-spacing: 0.1rem;
         }
     </style>
     <title>Worder</title>
@@ -23,12 +35,12 @@
 <body>
     <main class="container-fluid">
         <form>
+            <p class="label-clue">Add a "." for each incorrect letter in the answer</p>
+
             <label aria-required="true">
                 🟩 Correct letters
-                <input type="text" name="greens" autocomplete="off">
+                <input type="text" name="greens" autocomplete="off" value="la...">
             </label>
-
-            <p class="label-clue">Add a "." for each incorrect letter in the answer</p>
 
             <label>
                 ⬛ Incorrect letters
@@ -43,7 +55,8 @@
             <button type="submit">Search</button>
         </form>
 
-        <section id="output"></section>
+        <h2 id="output-count"></h2>
+        <section id="output" class="grid"></section>
     </main>
 
     <script src="./index.js"></script>
