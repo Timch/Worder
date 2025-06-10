@@ -33,11 +33,34 @@ function parseLetterInput(input) {
     return chars.filter((char) => /[a-z]/.test(char));
 }
 
+/**
+ * @param {string} word - 5-letter word to check
+ * @param {RegExp} searchPattern - Pattern from green letters and periods
+ * @param {string[]} grays - List of gray letters from the input
+ * @param {string[]} yellows - List of yellow letters from the input
+ * @returns {boolean} Determination if the word is a possible solution to the puzzle
+ */
+export function checkWord(word, searchPattern, grays, yellows) {
+    const match = searchPattern.exec(word);
+
+    // The word must match the search pattern
+    if (match == null) { return false; }
+
+    // The word can't contain any of the incorrect letters
+    if (Array.from(word).some((letter) => grays.includes(letter))) { return false; }
+
+    // All yellow letters must be among the remaining letters from the search pattern
+    const matchedLetters = match.slice(1);
+    if (!yellows.every((letter) => matchedLetters.includes(letter))) { return false; }
+
+    return true;
+}
+
 const form = document.querySelector('form');
 const output = document.getElementById('output');
 const outputHeading = document.getElementById('output-count');
 
-form.addEventListener("submit", (e) => {
+form?.addEventListener("submit", (e) => {
     e.preventDefault();
 
     const formData = new FormData(form);
@@ -54,21 +77,7 @@ form.addEventListener("submit", (e) => {
     const searchPattern = new RegExp(tokens.join(''));
 
     const children = words
-        .filter((word) => {
-            const match = searchPattern.exec(word);
-
-            // The word must match the search pattern
-            if (match == null) { return false; }
-
-            // The word can't contain any of the incorrect letters
-            if (Array.from(word).some((letter) => grays.includes(letter))) { return false; }
-
-            // All yellow letters must be among the remaining letters from the search pattern
-            const matchedLetters = match.slice(1);
-            if (!yellows.every((letter) => matchedLetters.includes(letter))) { return false; }
-
-            return true;
-        })
+        .filter((word) => checkWord(word, searchPattern, grays, yellows))
         .map((word) => {
             const element = document.createElement('div');
             element.textContent = word.toLocaleUpperCase();
