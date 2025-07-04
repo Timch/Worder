@@ -34,6 +34,17 @@ function parseLetterInput(input) {
 }
 
 /**
+ * Create a regular expression based on the blank characters in the greens.
+ * 
+ * @param {string[]} greens - Letters and blanks
+ * @returns {RegExp} Pattern which matches the green letters
+ */
+function generateSearchPattern(greens) {
+    const tokens = greens.map((token) => token === BLANK ? '([a-z])' : token);
+    return new RegExp(tokens.join(''));
+}
+
+/**
  * @param {string} word - 5-letter word to check
  * @param {RegExp} searchPattern - Pattern from green letters and periods
  * @param {string[]} grays - List of gray letters from the input
@@ -46,45 +57,56 @@ export function checkWord(word, searchPattern, grays, yellows) {
     // The word must match the search pattern
     if (match == null) { return false; }
 
-    // The word can't contain any of the incorrect letters
-    if (Array.from(word).some((letter) => grays.includes(letter))) { return false; }
+    // The list of remaining letters in the word
+    const matchedLetters = match.slice(1);
+
+    // The remaining letters can't contain any of the incorrect letters
+    if (matchedLetters.some((letter) => grays.includes(letter))) { return false; }
 
     // All yellow letters must be among the remaining letters from the search pattern
-    const matchedLetters = match.slice(1);
-    if (!yellows.every((letter) => matchedLetters.includes(letter))) { return false; }
+    const remainingLetters = [...matchedLetters];
+    for (const letter of yellows) {
+        const index = remainingLetters.indexOf(letter);
+        if (index === -1) {
+            // Yellow letter not in word.
+            return false;
+        }
+        // Remove the letter so it cannot be matched again
+        remainingLetters.splice(index, 1);
+    }
 
     return true;
 }
 
-const form = document.querySelector('form');
-const output = document.getElementById('output');
-const outputHeading = document.getElementById('output-count');
+// Only run if in a browser environment
+if (typeof document !== 'undefined') {
+    const form = document.querySelector('form');
+    const output = document.getElementById('output');
+    const outputHeading = document.getElementById('output-count');
 
-form?.addEventListener("submit", (e) => {
-    e.preventDefault();
+    form?.addEventListener("submit", (e) => {
+        e.preventDefault();
 
-    const formData = new FormData(form);
-    const greens = parseTokenInput(formData.get('greens'), 5);
-    const grays = parseLetterInput(formData.get('grays'));
-    const yellows = parseLetterInput(formData.get('yellows'));
+        const formData = new FormData(form);
+        const greens = parseTokenInput(formData.get('greens'), 5);
+        const searchPattern = generateSearchPattern(greens);
+        const grays = parseLetterInput(formData.get('grays'));
+        const yellows = parseLetterInput(formData.get('yellows'));
 
-    // Backfill the input string into the form element
-    const greensInput = document.querySelector('input[name="greens"]');
-    greensInput.value = greens.join('');
+        // Backfill the input string into the form element
+        const greensInput = document.querySelector('input[name="greens"]');
+        greensInput.value = greens.join('');
 
-    // Create a regular expression based on the blank characters in the greens
-    const tokens = greens.map((token) => token === BLANK ? '([a-z])' : token);
-    const searchPattern = new RegExp(tokens.join(''));
+        const children = words
+            .filter((word) => checkWord(word, searchPattern, grays, yellows))
+            .map((word) => {
+                const element = document.createElement('div');
+                element.textContent = word.toLocaleUpperCase();
+                element.classList.add('word');
+                return element;
+            });
 
-    const children = words
-        .filter((word) => checkWord(word, searchPattern, grays, yellows))
-        .map((word) => {
-            const element = document.createElement('div');
-            element.textContent = word.toLocaleUpperCase();
-            element.classList.add('word');
-            return element;
-        });
-
-    output.replaceChildren(...children);
-    outputHeading.textContent = `${children.length} results`
-});
+        output.replaceChildren(...children);
+        outputHeading.textContent = `${children.length} results`
+    });
+}
